@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">JP Migaku</string>
-    <string name="home_title">JP Migaku</string>
+    <string name="app_name">Japanese Learning Companion</string>
+    <string name="home_title">Japanese Learning Companion</string>
     <string name="home_brand_kanji">磨</string>
     <string name="add_vocab_button">Agregar vocabulario</string>
     <string name="add_kanji_button">Añadir kanji</string>
@@ -28,12 +28,12 @@
     <string name="statistics_kanji_mastered">Kanji dominados: %1$d</string>
     <string name="statistics_conjugation_known">Conjugaciones conocidas: %1$d</string>
     <string name="statistics_conjugation_mastered">Conjugaciones dominadas: %1$d</string>
-    <string name="home_version_credit">JP Migaku v.0.3.5 (beta)</string>
-    <string name="home_copyright_credit">Copyright (c) Rafa Palomino · JP Migaku v.0.3.5 (beta)</string>
+    <string name="home_version_credit">Japanese Learning Companion v.0.3.5 (beta)</string>
+    <string name="home_copyright_credit">Copyright (c) Rafa Palomino · Japanese Learning Companion v.0.3.5 (beta)</string>
     <string name="home_jmdict_credit">JMdict es propiedad de Electronic Dictionary Research and Development Group</string>
     <string name="home_kanjidic_credit">KANJIDIC2 es propiedad de Electronic Dictionary Research and Development Group</string>
     <string name="home_jlpt_credit">Las clasificaciones JLPT proceden de japanese-language-data, Jonathan Waller y sus fuentes colaboradoras</string>
-    <string name="home_software_credit">Disclaimer de software de terceros para JP Migaku v.0.3.5 (beta): Android, AndroidX, Jetpack Compose, Material Components, Kotlin, Coroutines, Gradle, Android Gradle Plugin, KSP, Hilt, JUnit y Espresso son proyectos de terceros bajo sus respectivas licencias</string>
+    <string name="home_software_credit">Disclaimer de software de terceros para Japanese Learning Companion v.0.3.5 (beta): Android, AndroidX, Jetpack Compose, Material Components, Kotlin, Coroutines, Gradle, Android Gradle Plugin, KSP, Hilt, JUnit y Espresso son proyectos de terceros bajo sus respectivas licencias</string>
     <string name="add_vocab_title">Añadir vocabulario</string>
     <string name="dictionary_search_title">Buscar en el diccionario</string>
     <string name="dictionary_search_hint">Kanji, kana, romaji o traducción</string>

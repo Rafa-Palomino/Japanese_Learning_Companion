@@ -1,9 +1,9 @@
-# JP Migaku
+# Japanese Learning Companion
 
-JP Migaku es una aplicación Android orientada al estudio del japonés y
-concebida para funcionar sin conexión. Su objetivo es ofrecer una base
-extensible para organizar contenidos de estudio, crear tarjetas personales y
-repasar mediante un modo de estudio local.
+Japanese Learning Companion es una aplicación Android orientada al estudio
+del japonés y concebida para funcionar sin conexión. Su objetivo es ofrecer
+una base extensible para organizar contenidos de estudio, crear tarjetas
+personales y repasar mediante un modo de estudio local.
 
 El proyecto nace como una app personal de apoyo al aprendizaje de Japonés, y
 busca: 
@@ -84,7 +84,7 @@ aplicación.
 ## Fuentes de datos y atribución
 
 Los archivos de datos incluidos son de terceros y no están cubiertos por la
-licencia MIT del código original de JP Migaku:
+licencia MIT del código original del proyecto:
 
 | Datos | Fuente | Licencia y atribución |
 | --- | --- | --- |
@@ -98,9 +98,9 @@ datos comunitarios y no representan información oficial del examen JLPT.
 
 ## Software de terceros
 
-JP Migaku utiliza las siguientes herramientas y bibliotecas de código
-abierto. Las licencias de sus respectivos proyectos siguen siendo aplicables
-a esos componentes:
+Japanese Learning Companion utiliza las siguientes herramientas y
+bibliotecas de código abierto. Las licencias de sus respectivos proyectos
+siguen siendo aplicables a esos componentes:
 
 | Componente | Uso | Licencia |
 | --- | --- | --- |
@@ -123,8 +123,8 @@ distribuciones.
 
 ## Descargo de responsabilidad
 
-JP Migaku es un proyecto educativo independiente. No está afiliado,
-respaldado ni patrocinado por el Electronic Dictionary Research and
+Japanese Learning Companion es un proyecto educativo independiente. No está
+afiliado, respaldado ni patrocinado por el Electronic Dictionary Research and
 Development Group, JMdict, KANJIDIC2, los administradores del JLPT, Google,
 Android, JetBrains ni ningún otro proyecto de terceros mencionado.
 
@@ -136,6 +136,6 @@ licencias aplicables.
 
 ## Licencia
 
-El código original y los assets originales de JP Migaku se distribuyen bajo
+El código y los assets originales del proyecto se distribuyen bajo
 la [licencia MIT](LICENSE), excepto los datos y el software de terceros
 identificados anteriormente, que conservan sus propias licencias.
