@@ -111,4 +111,22 @@ object DatabaseMigrations {
             db.execSQL("ALTER TABLE conjugation_forms ADD COLUMN howTo TEXT NOT NULL DEFAULT ''")
         }
     }
+
+    val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS number_quiz_stats (
+                    numberValue INTEGER NOT NULL,
+                    quizMode TEXT NOT NULL,
+                    attempts INTEGER NOT NULL,
+                    correctCount INTEGER NOT NULL,
+                    incorrectCount INTEGER NOT NULL,
+                    lastReviewedAt INTEGER,
+                    PRIMARY KEY(numberValue, quizMode)
+                )
+                """.trimIndent()
+            )
+        }
+    }
 }

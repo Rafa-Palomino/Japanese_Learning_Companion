@@ -76,3 +76,11 @@ fun String.toKatakana(): String = map { character ->
         character
     }
 }.joinToString("")
+
+fun String.toHiragana(): String = map { character ->
+    if (character in '\u30A1'..'\u30F6') {
+        (character.code - 0x60).toChar()
+    } else {
+        character
+    }
+}.joinToString("")

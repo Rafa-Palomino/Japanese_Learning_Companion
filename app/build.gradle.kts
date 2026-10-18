@@ -17,8 +17,8 @@ android {
         applicationId = "com.jpmigaku.app"
         minSdk = 32
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.5 (beta)"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -8,12 +8,14 @@ import com.jpmigaku.app.domain.model.GrammarClassification
 import com.jpmigaku.app.domain.model.InflectionFormRule
 import com.jpmigaku.app.domain.model.InflectionPatternRule
 import com.jpmigaku.app.domain.model.InflectionResult
+import com.jpmigaku.app.domain.model.StatisticsRecord
 import com.jpmigaku.app.domain.model.VocabularyEntry
 import com.jpmigaku.app.domain.util.JapaneseInflectionEngine
 import javax.inject.Inject
 
 interface ConjugationRepository {
     suspend fun getSelectionForms(): List<ConjugationFormOption>
+    suspend fun getReviewStatistics(): List<StatisticsRecord>
     suspend fun isEligibleEntry(
         entry: VocabularyEntry,
         selectedFormKeys: Set<String>
@@ -30,6 +32,22 @@ class RoomConjugationRepository @Inject constructor(
     private val dictionaryVocabularyRepository: DictionaryVocabularyRepository,
     private val engine: JapaneseInflectionEngine
 ) : ConjugationRepository {
+    override suspend fun getReviewStatistics(): List<StatisticsRecord> {
+        val patternsById = dao.getPatterns().associateBy { it.id }
+        val reviewsByFormId = dao.getReviewStats().associateBy { it.conjugationFormId }
+        return dao.getForms().mapNotNull { form ->
+            val pattern = patternsById[form.patternId] ?: return@mapNotNull null
+            val review = reviewsByFormId[form.id]
+            StatisticsRecord(
+                id = form.id,
+                label = "${pattern.wordClass} · ${pattern.conjugationType} - ${form.displayName}",
+                attempts = review?.attempts ?: 0,
+                correctCount = review?.correctCount ?: 0,
+                incorrectCount = review?.incorrectCount ?: 0
+            )
+        }
+    }
+
     override suspend fun getSelectionForms(): List<ConjugationFormOption> {
         val patterns = dao.getPatterns().associateBy { it.id }
         return dao.getForms()

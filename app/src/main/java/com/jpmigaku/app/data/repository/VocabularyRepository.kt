@@ -7,6 +7,7 @@ import com.jpmigaku.app.data.local.entity.DeckEntity
 import com.jpmigaku.app.data.local.entity.StudyCardEntity
 import com.jpmigaku.app.data.local.entity.StudyCardReviewEntity
 import com.jpmigaku.app.domain.model.Deck
+import com.jpmigaku.app.domain.model.StatisticsRecord
 import com.jpmigaku.app.domain.model.VocabularyEntry
 import javax.inject.Inject
 import java.util.UUID
@@ -35,6 +36,7 @@ interface VocabularyRepository {
     ): VocabularyEntry
     suspend fun recordReview(entry: VocabularyEntry, wasCorrect: Boolean): VocabularyEntry
     suspend fun getAll(): List<VocabularyEntry>
+    suspend fun getReviewStatistics(kind: String): List<StatisticsRecord>
     suspend fun getDue(
         limit: Int = 10,
         kind: String? = null,
@@ -43,6 +45,8 @@ interface VocabularyRepository {
     suspend fun update(entry: VocabularyEntry)
     suspend fun search(query: String, limit: Int = 50): List<VocabularyEntry>
     suspend fun getByDeck(deckId: String): List<VocabularyEntry>
+    suspend fun getDeckIdsForCard(cardId: String): List<String>
+    suspend fun addToDecks(cardId: String, deckIds: List<String>)
     suspend fun removeFromDeck(cardId: String, deckId: String)
 }
 
@@ -167,6 +171,25 @@ class RoomVocabularyRepository @Inject constructor(private val database: JPMigak
 
     override suspend fun getAll(): List<VocabularyEntry> = cards.getAllCards().map { it.toEntry() }
 
+    override suspend fun getReviewStatistics(kind: String): List<StatisticsRecord> {
+        val reviewsByCardId = cards.getReviews().associateBy { it.cardId }
+        return cards.getAllCards()
+            .asSequence()
+            .filter { it.kind == kind }
+            .map { card ->
+                val review = reviewsByCardId[card.id]
+                StatisticsRecord(
+                    id = card.id,
+                    label = card.displayJapanese,
+                    detail = card.displayMeaning,
+                    attempts = review?.attempts ?: 0,
+                    correctCount = review?.correctCount ?: 0,
+                    incorrectCount = review?.incorrectCount ?: 0
+                )
+            }
+            .toList()
+    }
+
     override suspend fun getDue(limit: Int, kind: String?, deckId: String?): List<VocabularyEntry> {
         if (limit <= 0) return emptyList()
         val now = System.currentTimeMillis()
@@ -251,6 +274,17 @@ class RoomVocabularyRepository @Inject constructor(private val database: JPMigak
     override suspend fun getByDeck(deckId: String): List<VocabularyEntry> =
         cards.getCardsByDeck(deckId).map { it.toEntry() }
 
+    override suspend fun getDeckIdsForCard(cardId: String): List<String> =
+        cards.getDeckIds(cardId)
+
+    override suspend fun addToDecks(cardId: String, deckIds: List<String>) {
+        database.withTransaction {
+            deckIds.distinct().forEach { deckId ->
+                cards.insertDeckLink(CardDeckEntity(cardId, deckId))
+            }
+        }
+    }
+
     override suspend fun removeFromDeck(cardId: String, deckId: String) {
         cards.removeDeckLink(cardId, deckId)
     }
@@ -284,7 +318,11 @@ class RoomVocabularyRepository @Inject constructor(private val database: JPMigak
         return VocabularyEntry(
             id = id,
             japanese = displayJapanese,
-            reading = displayReading,
+            reading = if (kind == "KANJI") {
+                displayReading.withCommaSeparatedKanjiReadings()
+            } else {
+                displayReading
+            },
             meaningEs = displayMeaning,
             kind = kind,
             romaji = displayRomaji,

@@ -29,8 +29,8 @@ class RoomDictionaryKanjiRepository @Inject constructor(
         val english = englishMeanings.split(LIST_SEPARATOR).firstOrNull(String::isNotBlank)
         return DictionaryKanji(
             character = character,
-            onyomi = onyomi,
-            kunyomi = kunyomi,
+            onyomi = onyomi.withCommaSeparatedKanjiReadings(),
+            kunyomi = kunyomi.withCommaSeparatedKanjiReadings(),
             meaning = spanish ?: english.orEmpty(),
             isEnglishFallback = spanish == null && english != null,
             jlptLevel = jlptLevel.orEmpty()

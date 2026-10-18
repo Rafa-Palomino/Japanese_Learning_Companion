@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import com.jpmigaku.app.data.local.dao.DeckDao
 import com.jpmigaku.app.data.local.dao.ConjugationDao
 import com.jpmigaku.app.data.local.dao.JlptClassificationDao
+import com.jpmigaku.app.data.local.dao.NumberQuizStatsDao
 import com.jpmigaku.app.data.local.dao.StudyCardDao
 import com.jpmigaku.app.data.local.entity.CardDeckEntity
 import com.jpmigaku.app.data.local.entity.ConjugationFormEntity
@@ -12,6 +13,7 @@ import com.jpmigaku.app.data.local.entity.ConjugationPatternEntity
 import com.jpmigaku.app.data.local.entity.ConjugationReviewStatsEntity
 import com.jpmigaku.app.data.local.entity.DeckEntity
 import com.jpmigaku.app.data.local.entity.JlptClassificationEntity
+import com.jpmigaku.app.data.local.entity.NumberQuizStatsEntity
 import com.jpmigaku.app.data.local.entity.StudyCardEntity
 import com.jpmigaku.app.data.local.entity.StudyCardReviewEntity
 
@@ -24,9 +26,10 @@ import com.jpmigaku.app.data.local.entity.StudyCardReviewEntity
         JlptClassificationEntity::class,
         ConjugationPatternEntity::class,
         ConjugationFormEntity::class,
-        ConjugationReviewStatsEntity::class
+        ConjugationReviewStatsEntity::class,
+        NumberQuizStatsEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class JPMigakuDatabase : RoomDatabase() {
@@ -34,4 +37,5 @@ abstract class JPMigakuDatabase : RoomDatabase() {
     abstract fun conjugationDao(): ConjugationDao
     abstract fun studyCardDao(): StudyCardDao
     abstract fun jlptClassificationDao(): JlptClassificationDao
+    abstract fun numberQuizStatsDao(): NumberQuizStatsDao
 }

@@ -66,6 +66,8 @@ import androidx.compose.ui.geometry.Offset
 import com.jpmigaku.app.domain.model.DictionaryVocabulary
 import com.jpmigaku.app.domain.model.DictionaryKanji
 import com.jpmigaku.app.domain.model.KanjiQuizQuestion
+import com.jpmigaku.app.domain.model.JapaneseNumber
+import com.jpmigaku.app.domain.model.NumberMagnitude
 import com.jpmigaku.app.domain.model.VocabularyEntry
 import com.jpmigaku.app.domain.model.ConjugationFormOption
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -74,6 +76,8 @@ import com.jpmigaku.app.presentation.viewmodel.HomeScreen
 import com.jpmigaku.app.presentation.viewmodel.HomeViewModel
 import com.jpmigaku.app.presentation.viewmodel.QuizMode
 import com.jpmigaku.app.presentation.viewmodel.StudyArea
+import com.jpmigaku.app.presentation.viewmodel.StatisticsTopic
+import com.jpmigaku.app.domain.model.TopicStatisticsSummary
 import com.jpmigaku.app.domain.util.toRomaji
 
 private val JPMigakuColorScheme = lightColorScheme(
@@ -121,6 +125,107 @@ fun JPMigakuApp() {
 }
 
 @Composable
+private fun NumberQuizContent(
+    uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
+    number: JapaneseNumber,
+    viewModel: HomeViewModel
+) {
+    Text(
+        stringResource(R.string.quiz_title),
+        color = Color.Black,
+        style = MaterialTheme.typography.headlineSmall
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        stringResource(
+            if (uiState.quizMode == QuizMode.NUMBERS_STUDY) {
+                R.string.numbers_examples_remaining
+            } else {
+                R.string.numbers_questions_remaining
+            },
+            uiState.quizQuestionsRemaining
+        ),
+        color = Color.Black
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+
+    when (uiState.quizMode) {
+        QuizMode.NUMBERS_STUDY -> {
+            Text(stringResource(R.string.numbers_study_kanji, number.kanji))
+            Text(stringResource(R.string.numbers_study_arabic, number.value))
+            Text(stringResource(R.string.numbers_study_reading, number.readingHiragana))
+            if (uiState.showRomaji) {
+                Text(stringResource(R.string.numbers_study_romaji, number.romaji))
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            RedButton(onClick = viewModel::onSubmitQuizAnswer) {
+                Text(stringResource(R.string.next_button))
+            }
+        }
+
+        QuizMode.NUMBERS_KANJI_TO_ARABIC_WRITTEN -> {
+            Text(stringResource(R.string.numbers_prompt_arabic))
+            Text(number.kanji, style = MaterialTheme.typography.headlineMedium)
+            NumberWrittenAnswer(uiState, viewModel, R.string.numbers_arabic_answer_hint)
+        }
+
+        QuizMode.NUMBERS_ARABIC_TO_KANJI_SELECTION -> {
+            Text(stringResource(R.string.numbers_prompt_kanji))
+            Text(number.value.toString(), style = MaterialTheme.typography.headlineMedium)
+            uiState.quizNumberOptions.forEach { option ->
+                RedButton(onClick = { viewModel.onNumberQuizOptionSelected(option.value) }) {
+                    Text(option.kanji)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        QuizMode.NUMBERS_READING_SELECTION -> {
+            Text(stringResource(R.string.numbers_prompt_reading))
+            Text(number.kanji, style = MaterialTheme.typography.headlineMedium)
+            uiState.quizNumberOptions.forEach { option ->
+                RedButton(onClick = { viewModel.onNumberQuizOptionSelected(option.value) }) {
+                    Text(
+                        option.readingHiragana +
+                            if (uiState.showRomaji) "\n${option.romaji}" else ""
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        QuizMode.NUMBERS_READING_WRITTEN -> {
+            Text(stringResource(R.string.numbers_prompt_reading))
+            Text(number.kanji, style = MaterialTheme.typography.headlineMedium)
+            NumberWrittenAnswer(uiState, viewModel, R.string.numbers_reading_answer_hint)
+        }
+
+        else -> Unit
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    uiState.quizFeedback?.let { Text(it) }
+}
+
+@Composable
+private fun NumberWrittenAnswer(
+    uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
+    viewModel: HomeViewModel,
+    hintResource: Int
+) {
+    OutlinedTextField(
+        value = uiState.quizAnswer,
+        onValueChange = viewModel::onQuizAnswerChanged,
+        label = { Text(stringResource(hintResource)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    RedButton(onClick = viewModel::onSubmitQuizAnswer) {
+        Text(stringResource(R.string.submit_button))
+    }
+}
+
+@Composable
 fun JPMigakuHomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -140,12 +245,14 @@ fun JPMigakuHomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             HomeScreen.AddVocabulary -> AddVocabularyContent(uiState, viewModel)
             HomeScreen.PersonalVocabulary -> PersonalVocabularyContent(uiState, viewModel)
             HomeScreen.AddKanji -> AddKanjiContent(uiState, viewModel)
+            HomeScreen.NumberSelection -> NumberSelectionContent(uiState, viewModel)
             HomeScreen.ConjugationSelection -> ConjugationSelectionContent(uiState, viewModel)
             HomeScreen.QuizMode -> QuizModeContent(uiState, viewModel)
             HomeScreen.List -> VocabularyListContent(uiState, viewModel)
             HomeScreen.Quiz -> QuizContent(uiState, viewModel)
             HomeScreen.Search -> SearchContent(uiState, viewModel)
             HomeScreen.Statistics -> StatisticsContent(uiState, viewModel)
+            HomeScreen.StatisticsDetail -> StatisticsDetailContent(uiState, viewModel)
             HomeScreen.Decks -> DecksContent(uiState, viewModel)
             HomeScreen.DeckDetail -> DeckDetailContent(uiState, viewModel)
             HomeScreen.Settings -> SettingsContent(uiState, viewModel)
@@ -202,6 +309,12 @@ private fun HomeContent(uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiS
         label = stringResource(R.string.conjugation_area),
         onPrevious = viewModel::onConjugationSelectionClicked,
         onNext = { viewModel.onQuizClicked(StudyArea.CONJUGATION) }
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    StudyAreaRow(
+        label = stringResource(R.string.numbers_area),
+        onPrevious = viewModel::onNumberSelectionClicked,
+        onNext = { viewModel.onQuizClicked(StudyArea.NUMBERS) }
     )
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -401,7 +514,11 @@ private fun AddKanjiContent(
                                 .clickable { viewModel.onDictionaryKanjiSelected(entry) }
                                 .padding(vertical = 6.dp)
                         ) {
-                            Text(entry.character, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                entry.character +
+                                    if (entry.character in uiState.kanjiKeysInDefaultDeck) " ✓" else "",
+                                style = MaterialTheme.typography.titleMedium
+                            )
                             Text(entry.meaning)
                         }
                     }
@@ -521,7 +638,11 @@ private fun AddVocabularyContent(uiState: com.jpmigaku.app.presentation.viewmode
                                 .clickable { viewModel.onDictionaryVocabularySelected(entry) }
                                 .padding(vertical = 6.dp)
                         ) {
-                            Text(entry.japanese, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                entry.japanese +
+                                    if (entry.sequenceId in uiState.dictionaryKeysInDefaultDeck) " ✓" else "",
+                                style = MaterialTheme.typography.titleMedium
+                            )
                             Text("${entry.reading} · ${entry.meaning}")
                         }
                     }
@@ -776,8 +897,14 @@ private fun DeckDetailContent(
     val deck = uiState.decks.firstOrNull { it.id == uiState.managedDeckId }
     Text(deck?.name ?: stringResource(R.string.manage_decks_title), style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(12.dp))
-    RedButton(onClick = viewModel::onAddVocabularyClicked) {
-        Text(stringResource(R.string.add_vocab_button))
+    RedButton(onClick = viewModel::onAddManagedDeckItemClicked) {
+        Text(
+            if (deck?.kind == "KANJI") {
+                stringResource(R.string.add_kanji_button)
+            } else {
+                stringResource(R.string.add_vocab_button)
+            }
+        )
     }
     if (uiState.managedDeckEntries.isEmpty()) {
         Spacer(modifier = Modifier.height(8.dp))
@@ -794,8 +921,15 @@ private fun DeckDetailContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(entry.japanese, style = MaterialTheme.typography.titleMedium)
-                    Text("${entry.reading} · ${entry.meaningEs}")
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.onManagedDeckEntrySelected(entry) }
+                            .padding(vertical = 6.dp)
+                    ) {
+                        Text(entry.japanese, style = MaterialTheme.typography.titleMedium)
+                        Text("${entry.reading} · ${entry.meaningEs}")
+                    }
                 }
                 RedButton(onClick = { viewModel.onRemoveEntryFromDeck(entry) }) {
                     Text(stringResource(R.string.remove_button))
@@ -806,6 +940,90 @@ private fun DeckDetailContent(
     Spacer(modifier = Modifier.height(12.dp))
     RedButton(onClick = viewModel::onBackClicked) {
         Text(stringResource(R.string.back_button))
+    }
+
+    uiState.selectedManagedDeckEntry?.let { entry ->
+        AlertDialog(
+            onDismissRequest = viewModel::onManagedDeckEntryDismissed,
+            title = {
+                Text(
+                    if (entry.kind == "KANJI") {
+                        stringResource(R.string.kanji_entry_title)
+                    } else {
+                        stringResource(R.string.dictionary_entry_title)
+                    }
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(entry.japanese, style = MaterialTheme.typography.headlineSmall)
+                    Text("${stringResource(R.string.dictionary_reading_label)}: ${entry.reading}")
+                    if (entry.kind != "KANJI" && entry.romaji.isNotBlank()) {
+                        Text("${stringResource(R.string.dictionary_romaji_label)}: ${entry.romaji}")
+                    }
+                    Text("${stringResource(R.string.dictionary_meaning_label)}: ${entry.meaningEs}")
+                    ManagedEntryDeckSelector(uiState, entry, viewModel)
+                }
+            },
+            confirmButton = {
+                RedButton(
+                    onClick = viewModel::onAddManagedDeckEntryToSelectedDecks,
+                    enabled = uiState.selectedDeckIds.any { deckId ->
+                        deckId !in uiState.managedEntryDeckIds &&
+                            uiState.decks.any { it.id == deckId && it.kind == entry.kind }
+                    }
+                ) {
+                    Text(stringResource(R.string.add_button))
+                }
+            },
+            dismissButton = {
+                RedButton(onClick = viewModel::onManagedDeckEntryDismissed) {
+                    Text(stringResource(R.string.back_button))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun ManagedEntryDeckSelector(
+    uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
+    entry: VocabularyEntry,
+    viewModel: HomeViewModel
+) {
+    val compatibleDecks = uiState.decks.filter { it.kind == entry.kind }
+    Text(stringResource(R.string.deck_add_existing_title))
+    LazyColumn(
+        modifier = Modifier.heightIn(max = 180.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(compatibleDecks, key = { it.id }) { deck ->
+            val alreadyAdded = deck.id in uiState.managedEntryDeckIds
+            val selected = deck.id in uiState.selectedDeckIds
+            RedButton(
+                onClick = { viewModel.onDeckSelected(deck.id) },
+                enabled = !alreadyAdded
+            ) {
+                Text(
+                    deck.name +
+                        when {
+                            alreadyAdded -> " ✓"
+                            selected -> " +"
+                            else -> ""
+                        }
+                )
+            }
+        }
+    }
+    OutlinedTextField(
+        value = uiState.newDeckName,
+        onValueChange = viewModel::onDeckNameChanged,
+        label = { Text(stringResource(R.string.new_deck_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
+    RedButton(onClick = viewModel::onCreateDeckClicked) {
+        Text(stringResource(R.string.create_deck_button))
     }
 }
 
@@ -894,6 +1112,61 @@ private fun String.displayName(): String = when (uppercase()) {
     "VERB" -> "Verbo"
     "ADJECTIVE" -> "Adjetivo"
     else -> this
+}
+
+@Composable
+private fun NumberSelectionContent(
+    uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
+    viewModel: HomeViewModel
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            stringResource(R.string.numbers_selection_title),
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.88f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            NumberMagnitude.values().forEach { magnitude ->
+                val selected = magnitude == uiState.numberMagnitude
+                RedButton(onClick = { viewModel.onNumberMagnitudeSelected(magnitude) }) {
+                    Text(
+                        numberMagnitudeLabel(magnitude) +
+                            if (selected) " ✓" else ""
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.12f),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.End
+        ) {
+            RedButton(onClick = viewModel::onBackClicked) {
+                Text(stringResource(R.string.back_button))
+            }
+        }
+    }
+}
+
+@Composable
+private fun numberMagnitudeLabel(magnitude: NumberMagnitude): String = when (magnitude) {
+    NumberMagnitude.UNITS -> stringResource(R.string.numbers_magnitude_units)
+    NumberMagnitude.TENS -> stringResource(R.string.numbers_magnitude_tens)
+    NumberMagnitude.HUNDREDS -> stringResource(R.string.numbers_magnitude_hundreds)
+    NumberMagnitude.THOUSANDS -> stringResource(R.string.numbers_magnitude_thousands)
+    NumberMagnitude.TEN_THOUSANDS -> stringResource(R.string.numbers_magnitude_ten_thousands)
+    NumberMagnitude.HUNDRED_THOUSANDS -> stringResource(R.string.numbers_magnitude_hundred_thousands)
+    NumberMagnitude.MILLIONS -> stringResource(R.string.numbers_magnitude_millions)
+    NumberMagnitude.TEN_MILLIONS -> stringResource(R.string.numbers_magnitude_ten_millions)
+    NumberMagnitude.OKU -> stringResource(R.string.numbers_magnitude_oku)
 }
 
 @Composable
@@ -995,10 +1268,12 @@ private fun SettingSwitchRow(
 private fun RedButton(
     onClick: () -> Unit,
     enabled: Boolean = true,
+    modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
     Button(
         onClick = onClick,
+        modifier = modifier,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Red,
@@ -1065,7 +1340,7 @@ private fun QuizModeContent(uiState: com.jpmigaku.app.presentation.viewmodel.Hom
                     )
                 }
             }
-        } else {
+        } else if (uiState.studyArea != StudyArea.NUMBERS) {
             QuizDeckSelector(uiState, viewModel)
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -1082,6 +1357,45 @@ private fun QuizModeContent(uiState: com.jpmigaku.app.presentation.viewmodel.Hom
 
         if (uiState.studyArea == StudyArea.CONJUGATION) {
             Spacer(modifier = Modifier.height(4.dp))
+        } else if (uiState.studyArea == StudyArea.NUMBERS) {
+            Text(
+                text = stringResource(R.string.numbers_quiz_title),
+                color = Color.Black,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                stringResource(
+                    R.string.numbers_selected_magnitude,
+                    numberMagnitudeLabel(uiState.numberMagnitude)
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            QuizModeButton(
+                viewModel,
+                QuizMode.NUMBERS_STUDY,
+                stringResource(R.string.quiz_study_button)
+            )
+            QuizModeButton(
+                viewModel,
+                QuizMode.NUMBERS_KANJI_TO_ARABIC_WRITTEN,
+                stringResource(R.string.numbers_kanji_to_arabic_button)
+            )
+            QuizModeButton(
+                viewModel,
+                QuizMode.NUMBERS_ARABIC_TO_KANJI_SELECTION,
+                stringResource(R.string.numbers_arabic_to_kanji_button)
+            )
+            QuizModeButton(
+                viewModel,
+                QuizMode.NUMBERS_READING_SELECTION,
+                stringResource(R.string.numbers_reading_selection_button)
+            )
+            QuizModeButton(
+                viewModel,
+                QuizMode.NUMBERS_READING_WRITTEN,
+                stringResource(R.string.numbers_reading_written_button)
+            )
         } else if (uiState.studyArea == StudyArea.VOCABULARY) {
             Text(
                 text = stringResource(R.string.quiz_vocabulary_title),
@@ -1130,6 +1444,7 @@ private fun QuizDeckSelector(
     val allowedKind = when (uiState.studyArea) {
         StudyArea.KANJI -> "KANJI"
         StudyArea.VOCABULARY, StudyArea.CONJUGATION -> "VOCABULARY"
+        StudyArea.NUMBERS -> return
     }
     val decks = uiState.decks.filter { deck ->
         deck.kind == allowedKind &&
@@ -1219,31 +1534,149 @@ private fun StatisticsContent(
     uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
     viewModel: HomeViewModel
 ) {
-    Text(text = stringResource(R.string.statistics_title), style = MaterialTheme.typography.headlineSmall)
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(text = stringResource(R.string.statistics_vocab_count, uiState.vocabularies.size))
-    Text(text = stringResource(R.string.statistics_deck_count, uiState.decks.size))
-    Spacer(modifier = Modifier.height(16.dp))
-    Button(onClick = viewModel::onBackClicked) {
-        Text(stringResource(R.string.back_button))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = stringResource(R.string.statistics_title),
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        StatisticsTopic.values().forEach { topic ->
+            val summary = uiState.topicStatistics[topic] ?: TopicStatisticsSummary()
+            RedButton(
+                onClick = { viewModel.onStatisticsTopicClicked(topic) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(topic.titleResource()))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                stringResource(
+                    R.string.statistics_basic_summary,
+                    summary.savedCount,
+                    summary.attempts,
+                    summary.correctCount,
+                    summary.incorrectCount
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        uiState.feedback?.let { Text(it, color = Color.Red) }
+        RedButton(onClick = viewModel::onBackClicked) {
+            Text(stringResource(R.string.back_button))
+        }
     }
+}
+
+@Composable
+private fun StatisticsDetailContent(
+    uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState,
+    viewModel: HomeViewModel
+) {
+    val topic = uiState.selectedStatisticsTopic ?: return
+    val summary = uiState.topicStatistics[topic] ?: TopicStatisticsSummary()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Text(
+                stringResource(topic.titleResource()),
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(stringResource(R.string.statistics_attempts, summary.attempts))
+            Text(stringResource(R.string.statistics_correct, summary.correctCount))
+            Text(stringResource(R.string.statistics_incorrect, summary.incorrectCount))
+        }
+        if (topic != StatisticsTopic.NUMBERS) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(stringResource(topic.knownCountResource(), summary.knownCount))
+                Text(stringResource(topic.masteredCountResource(), summary.masteredCount))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.statistics_common_errors_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (summary.commonErrors.isEmpty()) {
+                    Text(stringResource(R.string.statistics_no_common_errors))
+                }
+            }
+            items(summary.commonErrors, key = { it.id }) { error ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(error.label, style = MaterialTheme.typography.titleSmall)
+                    if (error.detail.isNotBlank()) Text(error.detail)
+                    Text(
+                        stringResource(
+                            R.string.statistics_common_error_metrics,
+                            (error.accuracyRate * 100).toInt(),
+                            error.incorrectCount
+                        )
+                    )
+                }
+            }
+        }
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            RedButton(onClick = viewModel::onBackClicked) {
+                Text(stringResource(R.string.back_button))
+            }
+        }
+    }
+}
+
+private fun StatisticsTopic.titleResource(): Int = when (this) {
+    StatisticsTopic.VOCABULARY -> R.string.statistics_vocabulary_title
+    StatisticsTopic.KANJI -> R.string.statistics_kanji_title
+    StatisticsTopic.CONJUGATION -> R.string.statistics_conjugation_title
+    StatisticsTopic.NUMBERS -> R.string.statistics_numbers_title
+}
+
+private fun StatisticsTopic.knownCountResource(): Int = when (this) {
+    StatisticsTopic.VOCABULARY -> R.string.statistics_vocabulary_known
+    StatisticsTopic.KANJI -> R.string.statistics_kanji_known
+    StatisticsTopic.CONJUGATION -> R.string.statistics_conjugation_known
+    StatisticsTopic.NUMBERS -> error("Numbers do not show known-item counts")
+}
+
+private fun StatisticsTopic.masteredCountResource(): Int = when (this) {
+    StatisticsTopic.VOCABULARY -> R.string.statistics_vocabulary_mastered
+    StatisticsTopic.KANJI -> R.string.statistics_kanji_mastered
+    StatisticsTopic.CONJUGATION -> R.string.statistics_conjugation_mastered
+    StatisticsTopic.NUMBERS -> error("Numbers do not show mastered-item counts")
 }
 
 @Composable
 private fun QuizContent(uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState, viewModel: HomeViewModel) {
     if (uiState.quizCompleted) {
         Text(
-            text = stringResource(R.string.quiz_completed_title),
+            text = stringResource(
+                if (uiState.quizMode == QuizMode.NUMBERS_STUDY) {
+                    R.string.numbers_study_completed_title
+                } else {
+                    R.string.quiz_completed_title
+                }
+            ),
             color = Color.Black,
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Text(stringResource(R.string.quiz_correct_answers, uiState.quizCorrectAnswers))
-        Text(stringResource(R.string.quiz_incorrect_answers, uiState.quizIncorrectAnswers))
+        if (uiState.quizMode != QuizMode.NUMBERS_STUDY) {
+            Text(stringResource(R.string.quiz_correct_answers, uiState.quizCorrectAnswers))
+            Text(stringResource(R.string.quiz_incorrect_answers, uiState.quizIncorrectAnswers))
+        }
         Spacer(modifier = Modifier.height(16.dp))
         RedButton(onClick = viewModel::onBackClicked) {
             Text(stringResource(R.string.back_button))
         }
+        return
+    }
+    uiState.quizNumber?.let { number ->
+        NumberQuizContent(uiState, number, viewModel)
         return
     }
     if (uiState.quizEntry == null) {
@@ -1403,6 +1836,12 @@ private fun buildQuizCardText(
                 append("Conjuga:")
                 uiState.quizConjugationQuestion?.let(::appendConjugationQuizPrompt)
             }
+
+            QuizMode.NUMBERS_STUDY,
+            QuizMode.NUMBERS_KANJI_TO_ARABIC_WRITTEN,
+            QuizMode.NUMBERS_ARABIC_TO_KANJI_SELECTION,
+            QuizMode.NUMBERS_READING_SELECTION,
+            QuizMode.NUMBERS_READING_WRITTEN -> Unit
         }
     }
 }
@@ -1505,8 +1944,7 @@ private fun AnnotatedString.Builder.appendQuizMeaning(entry: VocabularyEntry) {
 private fun String.quizOptionDisplay(uiState: com.jpmigaku.app.presentation.viewmodel.HomeUiState): String {
     if (uiState.quizMode !in setOf(
             QuizMode.SPANISH_TO_JAPANESE_SELECTION,
-            QuizMode.SPANISH_TO_KANJI_SELECTION,
-            QuizMode.READINGS_TO_KANJI_SELECTION
+            QuizMode.SPANISH_TO_KANJI_SELECTION
         )
     ) {
         return this
