@@ -11,7 +11,7 @@ busca:
 - Evitar que los conceptos se olviden por falta de uso.
 - Poder organizar el conocimiento en decks para facilitar el estudio.
 
-El proyecto se encuentra actualmente en fase experimental (`0.2.0`). La
+El proyecto se encuentra actualmente en fase experimental (`0.3.5`). La
 implementación del repositorio es la fuente de verdad; las APIs, pantallas y
 algoritmos pueden cambiar durante el desarrollo.
 
